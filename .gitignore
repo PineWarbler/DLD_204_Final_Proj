@@ -2,3 +2,5 @@
 *.*
 #except vhd files
 !*.vhd
+#also explicitly ignore the README in the CPU_top_level/incremental_db
+**/CPU_top_level/
