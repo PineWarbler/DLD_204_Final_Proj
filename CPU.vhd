@@ -23,7 +23,7 @@ architecture fsm of cpu is
 	--op codes used by the CPU
 	constant NOP	:	std_logic_vector(7 downto 0) := "00000000";	--No operation
 	constant LDAI 	: 	std_logic_vector(7 downto 0) := "00000001";	--Load A immediate (from next mem loc after op code)
-	constant LDAM	:	std_logic_vector(7 downto 0) := "00000010";	--Load A from any RAM location
+	constant LDAM	:	std_logic_vector(7 downto 0) := "00000010";	--Load A from any RAM location -- how is this different from the above?
 	constant STAM 	: 	std_logic_vector(7 downto 0) := "00000011";	--Store A to any RAM location
 	constant ADDM 	:	std_logic_vector(7 downto 0) := "00000100";	--Add contents of any RAM location to A
 	constant INCA	:	std_logic_vector(7 downto 0) := "00000101";	--Increment A
