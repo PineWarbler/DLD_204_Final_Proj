@@ -26,7 +26,10 @@ architecture behavior of ram is
 	constant JBNZ	:	std_logic_vector(7 downto 0) := "00000111";	--Jump to new adr if contents of B not zero
 	constant LDSW	:	std_logic_vector(7 downto 0) := "00001000";	--Load A and B from switches (SW15-8 to A, SW7-0 to B)
 	constant HALT	:	std_logic_vector(7 downto 0) := "00001011";	--stop executing instructions
-	constant JUMP	:	std_logic_vector(7 downto 0) := "00001111";	--unconditional jump to new adr	
+	constant JUMP	:	std_logic_vector(7 downto 0) := "00001001";	--unconditional jump to new adr	
+	constant ADDAB		:	std_logic_vector(7 downto 0) := "00001010";	--store the sum of A and B in A
+	constant MULTAB	:	std_logic_vector(7 downto 0) := "00001011";	--store the product of A and B in A
+	constant DIVAB		:	std_logic_vector(7 downto 0) := "00001100";	-- store floor(A/B) in A and store mod(A/B) in B
 	
   type ram_array is array (0 to 127) of std_logic_vector(7 downto 0); --128 bytes of scratchpad RAM memory
   type prog_array is array (0 to 127) of std_logic_vector(7 downto 0); --128 bytes of program memory (will be accessed

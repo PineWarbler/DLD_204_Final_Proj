@@ -1,7 +1,8 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.std_logic_unsigned.all;
-use ieee.numeric_bit.all;
+-- use ieee.numeric_bit.all;
+use ieee.numeric_std.all;
 
 entity cpu is
 	port(	reset		: 	in std_logic;
@@ -71,9 +72,9 @@ begin
 			when STAM2=>	state_disp<="00100010";		--will display as "22" on current-state 7segs
 			when JBNZ1=> 	state_disp<="00110001";		--will display as "31" on current-state 7segs
 			when STOP=>  	state_disp<="11110000";		--will display as "F0" on current-state 7segs
-			when ADDAB=>	state_disp<="11110001";		--will display as "F1" on current-state 7segs
-			when MULTAB=>	state_disp<="11110010";		--will display as "F2" on current-state 7segs
-			when DIVAB=>	state_disp<="11110011";		--will display as "F2" on current-state 7segs
+			--when ADDAB=>	state_disp<="11110001";		--will display as "F1" on current-state 7segs
+			--when MULTAB=>	state_disp<="11110010";		--will display as "F2" on current-state 7segs
+			--when DIVAB=>	state_disp<="11110011";		--will display as "F2" on current-state 7segs
 			when others=> 	state_disp<="11111111" ;	--will display as "FF" on current-state 7segs
 		end case;	
 		
@@ -133,13 +134,17 @@ begin
 							CPU_state := load_op;	
 							pc <= pc+1;
 						when MULTAB =>
-							A <= bit_vector(to_unsigned(unsigned(A) * unsigned(B), 8)); -- from https://www.reddit.com/r/VHDL/comments/iwtv0f/comment/g62my5c/?utm_source=share&utm_medium=web2x&context=3
+							-- this type casting recipe concocted based on https://nandland.com/common-vhdl-conversions/
+							A <= std_logic_vector(to_unsigned(to_integer(unsigned(A)) * to_integer(unsigned(B)), A'length));
 							CPU_state := load_op;	
 							pc <= pc+1;
 						when DIVAB =>
-							C <= bit_vector(to_unsigned(unsigned(A)/unsigned(B), 8)); -- quotient in A; VHDL integers always round down
-							A <= C;
-							B <= bit_vector(to_unsigned(unsigned(A)-(unsigned(B) * unsigned(C)), 8)) -- remainder in B
+							-- similar recipe to `MULTAB`
+							 -- calculate floor(A/B); don't have to use floor because VHDL integers always round down
+							C <= std_logic_vector(to_unsigned(to_integer(unsigned(A)) / to_integer(unsigned(B)), A'length));
+							A <= C; -- store floor(A/B) in A
+							-- now calculate the remainder (A - (B*C))
+							B <= std_logic_vector(to_unsigned(to_integer(unsigned(A)) - (to_integer(unsigned(B)) * to_integer(unsigned(C))), A'length));
 							CPU_state := load_op;	
 							pc <= pc+1;
 						when others =>
