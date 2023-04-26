@@ -14,31 +14,34 @@ end ram;
 
 architecture behavior of ram is
 
-	--op codes used by the CPU
+	--opcodes used by the CPU
 	constant NOP	:	std_logic_vector(7 downto 0) := "00000000";	--No operation
-	constant LDAI 	: 	std_logic_vector(7 downto 0) := "00000001";	--Load A immediate (from next mem loc after op code)
-	constant LDAM	:	std_logic_vector(7 downto 0) := "00000010";	--Load A from any RAM location -- how is this different from the above?
-	constant STAM 	: 	std_logic_vector(7 downto 0) := "00000011";	--Store A to any RAM location
-	constant STBM 	: 	std_logic_vector(7 downto 0) := "00100011";	--Store B to any RAM location
+	constant LDAWV 	: 	std_logic_vector(7 downto 0) := "00000001";	--Load A with value given after opcode
+	constant LDBWV	:	std_logic_vector(7 downto 0) := "00011001"; --Load B with value given after opcode
+	constant LDAFM	:	std_logic_vector(7 downto 0) := "00000010";	--Load A from memory location given after opcode
+	constant LDBFM	:	std_logic_vector(7 downto 0) := "10000010";	--Load B from memory location given after opcode
+	constant STA2M 	: 	std_logic_vector(7 downto 0) := "00000011";	--Store A to any RAM location
+	constant STB2M 	: 	std_logic_vector(7 downto 0) := "00100011";	--Store B to any RAM location
 	constant ADDM 	:	std_logic_vector(7 downto 0) := "00000100";	--Add contents of any RAM location to A
+
 	constant INCA	:	std_logic_vector(7 downto 0) := "00000101";	--Increment A
 	constant INCB	:	std_logic_vector(7 downto 0) := "00100101";	--Increment B
-	constant JBNZ	:	std_logic_vector(7 downto 0) := "00000110";	--Jump to new adr if contents of B not zero
+	constant DECRA	:	std_logic_vector(7 downto 0) := "00010011"; -- decrement A
+	constant DECRB	:	std_logic_vector(7 downto 0) := "10010011"; -- decrement B
+
+	
 	constant LDSW	:	std_logic_vector(7 downto 0) := "00000111";	--Load A and B from switches (SW15-8 to A, SW7-0 to B)
 	constant HALT	:	std_logic_vector(7 downto 0) := "00001000";	--stop executing instructions
 	constant JUMP	:	std_logic_vector(7 downto 0) := "00001001";	--unconditional jump to new adr	
 	constant ADDAB	:	std_logic_vector(7 downto 0) := "00001010";	--store the sum of A and B in A
-	constant MULTAB	:	std_logic_vector(7 downto 0) := "00001011";	--store the product of A and B in A
-	constant DIVAB	:	std_logic_vector(7 downto 0) := "00001110";	-- store floor(A/B) in A and store mod(A/B) in B
-	constant CADDMA	:	std_logic_vector(7 downto 0) := "00001111";	-- Conditionally ADD M and A (store A<=A+M if B(0)==1)
-	constant WS		:	std_logic_vector(7 downto 0) := "00010000"; -- waterfall shift. right shift M and right shift B, but store "bumped-off"bit of M in MSB of B
-	constant CONCATMB		:	std_logic_vector(7 downto 0) := "00010001"; -- final step of the multiplication add-and-shift algorithm. -- final step of the multiplication add-and-shift algorithm.  Concatenate A and Q, keeping only 8 LSBs; store in A Concatenate A and Q, keeping only 8 LSBs
-	constant loopsentinel	:	std_logic_vector(7 downto 0) := "00010010"; -- skip the next two bytes in program memory if C=0 (use case: can stop a loop [i.e. JUMP, <..adr..>] by skipping three op-codes ahead based on the state of the iterator `C`
-	constant DECRC	:	std_logic_vector(7 downto 0) := "00010011"; -- decrement C
-	constant LDCI	:	std_logic_vector(7 downto 0) := "00010100"; -- load C immediately from memory location given after op code
-	constant CSUB	:	std_logic_vector(7 downto 0) := "00010101"; -- used in long division; subtracts divisor from dividend
-	constant specialDivFunc	:	std_logic_vector(7 downto 0) := "00010110"; -- used in long division; left shifts M and sets the LSB of M equal to bit C of the dividend (A)
-	constant finishDiv	:	std_logic_vector(7 downto 0) := "00010111"; -- used in long division; does some variable storage shifting to display the division results on A and B
+
+	constant loopsentinelA	:	std_logic_vector(7 downto 0) := "00010010"; -- skip the next two bytes in program memory if A='11111111' (use case: can stop a loop [i.e. JUMP, <..adr..>] by skipping three op-codes ahead based on the state of the iterator `C`
+	constant loopsentinelB	:	std_logic_vector(7 downto 0) := "00010011"; -- skip the next two bytes in program memory if B='11111111' (use case: can stop a loop [i.e. JUMP, <..adr..>] by skipping three op-codes ahead based on the state of the iterator `C`
+
+	constant SUBBA	:	std_logic_vector(7 downto 0) := "00011010"; -- subtract B from A; store result in A
+	constant CSUBA	:	std_logic_vector(7 downto 0) := "00010101"; -- used in long division; subtracts divisor from dividend
+
+	constant DISPQA	:	std_logic_vector(7 downto 0) := "00010110";
 
 	
   type ram_array is array (0 to 127) of std_logic_vector(7 downto 0); --128 bytes of scratchpad RAM memory
@@ -47,9 +50,34 @@ architecture behavior of ram is
   
 	signal ram_data: ram_array := (others => x"00");							--stores data. All bytes contain zeros by default
 
-  signal prog_data: prog_array := (LDSW, ADDAB, HALT, 			--a very short program	
-											  others =>NOP	
-											 );	
+  -- signal prog_data: prog_array := (LDSW, ADDAB, HALT, 			--a very short program	
+											  -- others =>NOP	
+											 -- );
+	-- signal prog_data: prog_array := (LDAWV, x"05", STA2M, x"01", INCA, LDAFM, x"01", HALT, others => NOP); -- A -> 9 -> 10 -> 9
+
+
+	-- memory addresses  to store variables in scratchpad memory --
+	constant a : std_logic_vector(7 downto 0) := "00000001";
+	constant b : std_logic_vector(7 downto 0) := "00000010";										 
+	constant q : std_logic_vector(7 downto 0) := "00000011";
+	constant r : std_logic_vector(7 downto 0) := "00000100";
+	constant breakflag : std_logic_vector(7 downto 0) := "00000101"; -- set to 1 if CSUB does not execute
+	-- division --
+	signal prog_data: prog_array := (
+		LDSW, 
+		STA2M, r, STA2M, a, STB2M, b, -- store initial values in memory
+		CSUBA,
+		STA2M, a, -- store result of subtraction to RAM
+		LDAFM, q, INCA, STA2M, q, --increment Q
+		LDAFM, a, -- restore A
+		STA2M, r, -- R = A
+		JUMP, x"87", -- jump to CSUBA to repeat the loop
+		LDAFM, q, -- display Q on A and R on B
+		LDBFM, r,
+		HALT, others => NOP);
+
+	
+	-- signal prog_data: prog_array := (LDAWV, x"01", LDBWV, x"09", NOP, HALT, others => NOP); -- this works as expected; 1 on A and 9 on B
 --   signal prog_data: prog_array := (LDSW, ADDAB, NOP, LDSW, MULTAB, NOP, LDSW, LDSW, DIVAB, JUMP, x"80", HALT, 			--a very short program	
 -- 											  others =>NOP	
 -- 											 );	
@@ -61,9 +89,9 @@ architecture behavior of ram is
 -- 											);	
 
 -- an attempt to condense the control flow of the multiplication algorithm using a `for` loop
--- signal prog_data: prog_array := (LDSW, NOP, CADDMA, WS, DECRC, loopsentinel, JUMP, x"82", CONCATMB, HALT,
--- 											 others =>NOP	
--- 											);	
+--signal prog_data: prog_array := (LDSW, NOP, CADDMA, WS, DECRC, loopsentinel, JUMP, x"82", CONCATMB, HALT,
+ 											 --others =>NOP	
+ 											--);	
 
 
 -- this is for long division; I think an iterated loop implementation is the only option
