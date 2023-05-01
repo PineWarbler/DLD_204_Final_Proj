@@ -49,6 +49,12 @@ architecture fsm of cpu is
 
 	constant DISPQA	:	std_logic_vector(7 downto 0) := "00010110";
 	constant forloopsentinel	:	std_logic_vector(7 downto 0) := "00010111";
+
+	constant ShiftAR	:	std_logic_vector(7 downto 0) := "01010111"; -- shift contents of register A once to the right
+	constant ShiftBR	:	std_logic_vector(7 downto 0) := "01011000"; -- shift contents of register B once to the right
+
+	constant CSUBNewtonRaphson	:	std_logic_vector(7 downto 0) := "01011001"; -- shift contents of register A once to the right
+	constant loopsentinelNewtonRaphson :	std_logic_vector(7 downto 0) := "01011010"; -- shift contents of register A once to the right
 	------------------ DEPRECATED CODES: -------------------------------
 	-- constant JBNZ	:	std_logic_vector(7 downto 0) := "00000110";	--Jump to new adr if contents of B not zero
 	-- constant LDCI	:	std_logic_vector(7 downto 0) := "00010100"; -- load C immediately from memory location given after opcode
@@ -198,6 +204,14 @@ begin
 							A <= A - B;
 							CPU_state := load_op;	--do nothing but prepare to fetch next instr
 							pc <= pc+1;
+
+						when forloopsentinel =>
+							CPU_state := load_op;
+							if (B="00000001") then
+								pc<= pc + 6;
+							else
+								pc <= pc + 1;
+							end if;
 						
 						-- when INCMEM =>
 						-- 	CPU_state := INCMEM1;
@@ -254,6 +268,16 @@ begin
 								adr <= pc + 14;
 								CPU_state := load_op;	--prepare to load opcode at this new adr
 							end if;
+								
+						when ShiftAR => -- shift contents of register A once to the right
+							A <= '0' & A(7 downto 1);
+							CPU_state := load_op;
+							pc <= pc+1;	
+
+						when ShiftBR => -- shift contents of register B once to the right
+							B <= '0' & B(7 downto 1);
+							CPU_state := load_op;
+							pc <= pc+1;	
 								
 						-- when DISPQA =>
 						-- 	A <= Q;
