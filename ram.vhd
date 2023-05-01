@@ -44,19 +44,24 @@ architecture behavior of ram is
 	constant DISPQA	:	std_logic_vector(7 downto 0) := "00010110";
 	constant forloopsentinel	:	std_logic_vector(7 downto 0) := "00010111";
 
+	constant ShiftAR	:	std_logic_vector(7 downto 0) := "01010111"; -- shift contents of register A once to the right
+	constant ShiftBR	:	std_logic_vector(7 downto 0) := "01011000"; -- shift contents of register B once to the right
+
+	constant CSUBNewtonRaphson	:	std_logic_vector(7 downto 0) := "01011001"; -- shift contents of register A once to the right
+	constant loopsentinelNewtonRaphson :	std_logic_vector(7 downto 0) := "01011010"; -- shift contents of register A once to the right
+
 	
   type ram_array is array (0 to 127) of std_logic_vector(7 downto 0); --128 bytes of scratchpad RAM memory
   type prog_array is array (0 to 127) of std_logic_vector(7 downto 0); --128 bytes of program memory (will be accessed
 																							 --as addresses 128 to 255 or x80 to xFF)
   
-	signal ram_data: ram_array := (others => x"00");							--stores data. All bytes contain zeros by default
+   signal ram_data: ram_array := (others => x"00");							--stores data. All bytes contain zeros by default
 
+	-- ==== ADDITION ====
   -- signal prog_data: prog_array := (LDSW, ADDAB, HALT, 			--a very short program	
 											  -- others =>NOP	
 											 -- );
-	-- signal prog_data: prog_array := (LDAWV, x"05", STA2M, x"01", INCA, LDAFM, x"01", HALT, others => NOP); -- A -> 9 -> 10 -> 9
-
-
+	-- ==== DIVISION ====
 	-- memory addresses  to store variables in scratchpad memory --
 --	constant a : std_logic_vector(7 downto 0) := "00000001";
 --	constant b : std_logic_vector(7 downto 0) := "00000010";										 
@@ -104,7 +109,55 @@ architecture behavior of ram is
 		HALT, others => NOP);
 		
 		
+		-- ===== NEWTON-RAPHSON sqrt finding =====
+		-- -- memory addresses  to store variables in scratchpad memory --
+		-- constant a : std_logic_vector(7 downto 0) := "00000001";
+		-- constant b : std_logic_vector(7 downto 0) := "00000010";	 -- last iteration value									 
+		-- constant q : std_logic_vector(7 downto 0) := "00000011";
+		-- constant last : std_logic_vector(7 downto 0) := "00000100";
+		-- constant n : std_logic_vector(7 downto 0) := "00000101"; -- original number
+		-- constant iterator : std_logic_vector(7 downto 0) := "00000110"; -- loop iterator
+	
 		
+		-- -- newton-raphson method of finding floor(sqrt(n))
+		-- signal prog_data: prog_array := (
+			
+		-- 	LDSW, 
+		-- 	STA2M, n, -- let n be the number of which to take the sqrt --STB2M, b, -- store initial values in memory
+	
+		-- 	LDAWV, "00000000", -- counts the number of loop iterations
+		-- 	STA2M, iterator,
+	
+		-- 	LDBWV, "00000111", -- 7 in base 10; initial guess
+		-- 	STB2M, last, -- register B will carry the previous iteration's guess
+	
+			
+		-- 	-- beginning of next iteration of newton-raphson
+		-- 	LDBWV, x"00", STB2M, q,-- reset quotient counter for new division process
+		-- 	LDBFM, last, 
+			
+		-- 	-- division --
+		-- 	LDAFM, n, -- make sure we have the original value of N
+		-- 	CSUBNewtonRaphson, -- will need to edit the magic number in this function to skip to end of iteration
+		-- 	STA2M, a, -- store result of subtraction to RAM
+		-- 	LDAFM, q, INCA, STA2M, q, --increment Q
+		-- 	LDAFM, a, -- restore A
+		-- 	JUMP, x"93", -- jump to CSUBNewtonRaphson to repeat the loop
+	
+		-- 	LDAFM, q, -- load A with value of quotient (i.e. floor of division result)
+			
+		-- 	-- actual newton-raphson stuff -- 
+		-- 	-- LDAFM, last, -- load last iteration guess -- B should still have `last` in it
+		-- 	ADDAB, -- add last iteration guess (B) to quotient (A); store in A
+		-- 	ShiftAR, -- shift A once to the right (divide by 2)
+		-- 	STA2M, last, -- record the current guess in memory
+		-- 	LDBFM, iterator, INCB, STB2M, iterator, -- increment loop count iterator
+	
+		-- 	loopsentinelNewtonRaphson, -- jump three ahead if iteration (register B) reaches max of 3 (arbitrary for convergence)
+		-- 	JUMP, x"8B", -- jump to next iteration of newton-raphson iteration (`LDBFM, last`)
+		-- 	-- last guess will already be on register A for display when we jump to HALT
+		-- 	LDBFM, n, -- display input number on B
+		-- 	HALT, others => NOP);
 
 	
 	-- signal prog_data: prog_array := (LDAWV, x"01", LDBWV, x"09", NOP, HALT, others => NOP); -- this works as expected; 1 on A and 9 on B
