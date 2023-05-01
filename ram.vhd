@@ -42,6 +42,7 @@ architecture behavior of ram is
 	constant CSUBA	:	std_logic_vector(7 downto 0) := "00010101"; -- used in long division; subtracts divisor from dividend
 
 	constant DISPQA	:	std_logic_vector(7 downto 0) := "00010110";
+	constant forloopsentinel	:	std_logic_vector(7 downto 0) := "00010111";
 
 	
   type ram_array is array (0 to 127) of std_logic_vector(7 downto 0); --128 bytes of scratchpad RAM memory
@@ -57,24 +58,53 @@ architecture behavior of ram is
 
 
 	-- memory addresses  to store variables in scratchpad memory --
-	constant a : std_logic_vector(7 downto 0) := "00000001";
-	constant b : std_logic_vector(7 downto 0) := "00000010";										 
-	constant q : std_logic_vector(7 downto 0) := "00000011";
-	constant r : std_logic_vector(7 downto 0) := "00000100";
-	constant breakflag : std_logic_vector(7 downto 0) := "00000101"; -- set to 1 if CSUB does not execute
+--	constant a : std_logic_vector(7 downto 0) := "00000001";
+--	constant b : std_logic_vector(7 downto 0) := "00000010";										 
+--	constant q : std_logic_vector(7 downto 0) := "00000011";
+--	constant r : std_logic_vector(7 downto 0) := "00000100";
+--	constant breakflag : std_logic_vector(7 downto 0) := "00000101"; -- set to 1 if CSUB does not execute
 	-- division --
+--	signal prog_data: prog_array := (
+--		LDSW, 
+--		STA2M, r, STA2M, a, STB2M, b, -- store initial values in memory
+--		CSUBA,
+--		STA2M, a, -- store result of subtraction to RAM
+--		LDAFM, q, INCA, STA2M, q, --increment Q
+--		LDAFM, a, -- restore A
+--		STA2M, r, -- R = A
+--		JUMP, x"87", -- jump to CSUBA to repeat the loop
+--		LDAFM, q, -- display Q on A and R on B
+--		LDBFM, r,
+--		HALT, others => NOP);
+	
+	
+	--Fibonnacci Sequence--
+	--memory addresses to store variables in scratchpad memory--
+	constant n : std_logic_vector(7 downto 0) := "00000001";
+	constant b : std_logic_vector(7 downto 0) := "00000010";	
+	constant sum : std_logic_vector(7 downto 0) := "00000011";
+	constant a : std_logic_vector(7 downto 0) := "00000100";
+	
 	signal prog_data: prog_array := (
-		LDSW, 
-		STA2M, r, STA2M, a, STB2M, b, -- store initial values in memory
-		CSUBA,
-		STA2M, a, -- store result of subtraction to RAM
-		LDAFM, q, INCA, STA2M, q, --increment Q
-		LDAFM, a, -- restore A
-		STA2M, r, -- R = A
-		JUMP, x"87", -- jump to CSUBA to repeat the loop
-		LDAFM, q, -- display Q on A and R on B
-		LDBFM, r,
+		LDSW,
+		STA2M, n,
+		LDAWV, x"00",
+		LDBWV, x"01",
+		ADDAB,
+		STB2M, a,
+		STA2M, b,
+		LDBFM, n,
+		DECRB,
+		STB2M, n,
+		forloopsentinel,
+		LDAFM, a,
+		LDBFM, b,
+		jump, x"87",
+		LDAFM, a,
 		HALT, others => NOP);
+		
+		
+		
 
 	
 	-- signal prog_data: prog_array := (LDAWV, x"01", LDBWV, x"09", NOP, HALT, others => NOP); -- this works as expected; 1 on A and 9 on B

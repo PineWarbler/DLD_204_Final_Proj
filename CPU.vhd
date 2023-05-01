@@ -48,6 +48,7 @@ architecture fsm of cpu is
 	constant CSUBA	:	std_logic_vector(7 downto 0) := "00010101"; -- used in long division; subtracts divisor from dividend
 
 	constant DISPQA	:	std_logic_vector(7 downto 0) := "00010110";
+	constant forloopsentinel	:	std_logic_vector(7 downto 0) := "00010111";
 	------------------ DEPRECATED CODES: -------------------------------
 	-- constant JBNZ	:	std_logic_vector(7 downto 0) := "00000110";	--Jump to new adr if contents of B not zero
 	-- constant LDCI	:	std_logic_vector(7 downto 0) := "00010100"; -- load C immediately from memory location given after opcode
@@ -217,7 +218,14 @@ begin
 						-- 	else
 						-- 		pc <= pc+1;
 						-- 	end if;
-						
+						when forloopsentinel =>
+							CPU_state := load_op;
+							if (B="00000001") then
+								pc<= pc + 6;
+							else
+								pc <= pc + 1;
+							end if;
+							
 						when DECRA => -- decrement A
 							A <= A-1;
 							CPU_state := load_op;
