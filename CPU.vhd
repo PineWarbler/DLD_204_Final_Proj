@@ -269,6 +269,27 @@ begin
 								CPU_state := load_op;	--prepare to load opcode at this new adr
 							end if;
 								
+						when CSUBNewtonRaphson => -- same thing as CSUBA except different magic numbers in jump advance
+							if (A >= B) then
+								A <= A - B;
+								CPU_state := load_op;
+								pc <= pc+1;
+							else
+								pc <= pc + 12; -- jump to next non-loop command
+								adr <= pc + 12;
+								CPU_state := load_op;	--prepare to load opcode at this new adr
+							end if;
+
+						when loopsentinelNewtonRaphson =>
+							if (B >= 3) then
+								pc <= pc + 3; -- jump to next non-loop command
+								adr <= pc + 3;
+								CPU_state := load_op;	--prepare to load opcode at this new adr
+							else
+								CPU_state := load_op;
+								pc <= pc+1;
+							end if;
+						
 						when ShiftAR => -- shift contents of register A once to the right
 							A <= '0' & A(7 downto 1);
 							CPU_state := load_op;
