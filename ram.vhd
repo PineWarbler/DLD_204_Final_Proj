@@ -49,6 +49,7 @@ architecture behavior of ram is
 
 	constant CSUBNewtonRaphson	:	std_logic_vector(7 downto 0) := "01011001"; -- shift contents of register A once to the right
 	constant loopsentinelNewtonRaphson :	std_logic_vector(7 downto 0) := "01011010"; -- shift contents of register A once to the right
+	constant SWAPAB	:	std_logic_vector(7 downto 0) := "01011011"; -- swaps the contents in registers A and B
 
 	
   type ram_array is array (0 to 127) of std_logic_vector(7 downto 0); --128 bytes of scratchpad RAM memory

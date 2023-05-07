@@ -66,6 +66,7 @@ architecture fsm of cpu is
 	-- constant CADDMA	:	std_logic_vector(7 downto 0) := "00001111";	-- Conditionally ADD M and A (store A<=A+M if B(0)==1)
 	-- constant WS		:	std_logic_vector(7 downto 0) := "00010000"; -- waterfall shift. right shift M and right shift B, but store "bumped-off"bit of M in MSB of B
 	-- constant CONCATMB		:	std_logic_vector(7 downto 0) := "00010001"; -- final step of the multiplication add-and-shift algorithm. -- final step of the multiplication add-and-shift algorithm.  Concatenate A and Q, keeping only 8 LSBs; store in A Concatenate A and Q, keeping only 8 LSBs
+	--constant SWAPAB	:	std_logic_vector(7 downto 0) := "01011011"; -- swaps the contents in registers A and B
 
 
 	--internal CPU registers.  You can add others if you want.
@@ -353,6 +354,13 @@ begin
 						-- 	A <= A + cpu_di;
 						-- 	CPU_state := load_op;	--do nothing but prepare to fetch next instr
 						-- 	pc <= pc+1;
+
+						-- when SWAPAB =>
+						-- 	CPU_state := load_op;
+						--	A <= A + B;
+						--	B <= A - B;
+						--	A <= A - B;
+						--	pc <= pc+1;
 
 						-- when cheatMULTAB =>
 						-- 	-- this type casting recipe concocted based on https://nandland.com/common-vhdl-conversions/
