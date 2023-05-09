@@ -68,6 +68,8 @@ architecture fsm of cpu is
 	-- constant CONCATMB		:	std_logic_vector(7 downto 0) := "00010001"; -- final step of the multiplication add-and-shift algorithm. -- final step of the multiplication add-and-shift algorithm.  Concatenate A and Q, keeping only 8 LSBs; store in A Concatenate A and Q, keeping only 8 LSBs
 	--constant SWAPAB	:	std_logic_vector(7 downto 0) := "01011011"; -- swaps the contents in registers A and B
 	--constant DECMEM	:	std_logic_vector(7 downto 0) := "01011100"; -- decrements a value stored in memory
+	-- constant SUBAMEM :	std_logic_vector(7 downto 0) := "01011101"; -- subtracts the value in register A from a value in memory
+
 
 
 	--internal CPU registers.  You can add others if you want.
@@ -223,8 +225,9 @@ begin
 						-- 	pc <= pc+2;
 
 						--when DECMEM =>
-							CPU_state := DECMEM1;
-							pc <= pc+2;
+						--	CPU_state := DECMEM1;
+						--	pc <= pc+2;
+						
 						
 						-- when loopsentinelA => -- stop a loop by skipping three op-codes ahead based on the state of the iterator `C`
 						-- 	CPU_state := load_op;
@@ -368,6 +371,11 @@ begin
 						--	A <= A + B;
 						--	B <= A - B;
 						--	A <= A - B;
+						--	pc <= pc+1;
+
+						-- when SUBAMEM =>
+						--	A <= A - cpu_di;
+						--	CPU_state := load_op;
 						--	pc <= pc+1;
 
 						-- when cheatMULTAB =>
