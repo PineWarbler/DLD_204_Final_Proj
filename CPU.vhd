@@ -67,6 +67,7 @@ architecture fsm of cpu is
 	-- constant WS		:	std_logic_vector(7 downto 0) := "00010000"; -- waterfall shift. right shift M and right shift B, but store "bumped-off"bit of M in MSB of B
 	-- constant CONCATMB		:	std_logic_vector(7 downto 0) := "00010001"; -- final step of the multiplication add-and-shift algorithm. -- final step of the multiplication add-and-shift algorithm.  Concatenate A and Q, keeping only 8 LSBs; store in A Concatenate A and Q, keeping only 8 LSBs
 	--constant SWAPAB	:	std_logic_vector(7 downto 0) := "01011011"; -- swaps the contents in registers A and B
+	--constant DECMEM	:	std_logic_vector(7 downto 0) := "01011100"; -- decrements a value stored in memory
 
 
 	--internal CPU registers.  You can add others if you want.
@@ -121,7 +122,10 @@ begin
 			when LDCI1=>		state_disp<="11110110";		--will display as "F6" on current-state 7segs
 			-- when INCMEM1=>		state_disp<="11110111";		--will display as "F7" on current-state 7segs
 			-- when INCMEM2=>		state_disp<="11111000";		--will display as "F8" on current-state 7segs
+			--when DECMEM1=>		state_disp<="11111001";		-- will dispay "F9" on current-state 7segs
+			--when DECMEM2=>		state_disp<="11111010";		-- will display "FA" on current-state 7segs
 			when others=> 	state_disp<="11111111" ;	--will display as "FF" on current-state 7segs
+		
 		end case;	
 		
 		if (reset= '0') then		
@@ -217,6 +221,10 @@ begin
 						-- when INCMEM =>
 						-- 	CPU_state := INCMEM1;
 						-- 	pc <= pc+2;
+
+						--when DECMEM =>
+							CPU_state := DECMEM1;
+							pc <= pc+2;
 						
 						-- when loopsentinelA => -- stop a loop by skipping three op-codes ahead based on the state of the iterator `C`
 						-- 	CPU_state := load_op;
@@ -410,6 +418,17 @@ begin
 				-- 	cpu_do <= A;
 				-- 	adr <= pc;
 				-- 	CPU_state := load_op;
+
+				-- when DECMEM1 =>
+				--	wren <= '1';
+				--	A <= cpu_di - 1;
+				--	CPU_state := DECMEM2;
+
+				-- when DECMEM2 =>
+				--	wren <= '1';
+				--	cpu_do <= A;
+				--	adr <= pc;
+				--	CPU_state := load_op;
 					
 				-- why do we need two STA2M helper functions? won't wren get re-written to 0 after STA2M1? No, wren=0 only happens or loadop
 				when STA2M1 =>					--left to you  Store A to any RAM location (i.e. a ram location defined by the user after opcode)
